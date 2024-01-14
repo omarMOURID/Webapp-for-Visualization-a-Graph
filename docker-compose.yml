@@ -1,0 +1,51 @@
+version: '3.8'
+services:
+  graph_visualisation_backend:
+    build: 
+      context: ./graph_visualisation_backend
+      dockerfile: ./Dockerfile
+      target: development
+    container_name: graph_backend_container
+    command: npm run start:dev
+    env_file:
+      - .env
+    ports:
+      - '4000:4000'
+    volumes:
+      - ./graph_visualisation_backend/src:/usr/src/app/src
+      - /usr/src/app/node_modules
+    depends_on:
+      - mysql
+      - neo4j
+
+  mysql:
+    image: mysql
+    container_name: mysql_container
+    env_file:
+      - .env
+    ports:
+      - '${DB_PORT}:3306'
+    environment:
+      MYSQL_ROOT_USER: ${DB_ROOT_USER}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${DB_DATABASE_NAME}
+      MYSQL_USER: ${DB_USERNAME}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - "${DB_DATA_FOLDER}:/var/lib/mysql"
+  
+  neo4j:
+    image: neo4j:4.4.3-community
+    container_name: neo4j_container
+    env_file:
+      - .env
+    ports:
+      - '${NEO4J_INTERFACE_PORT}:7474'
+      - '${NEO4J_PORT}:7687'
+    environment:
+      NEO4J_AUTH: "${NEO4J_AUTH}"
+    volumes:
+      - "${NEO4J_DATA_FOLDER}:/data"
+      - "${NEO4J_LOGS_FOLDER}:/logs"
+      - "${NEO4J_CONF_FOLDER}:/conf"
+    

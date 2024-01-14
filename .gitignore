@@ -1,0 +1,22 @@
+*.env
+
+# NodeJs modules
+graph_visualisation_backend/node_modules/
+
+# NestJS tests
+graph_visualisation_backend/test/
+
+# NestJS build output
+graph_visualisation_backend/dist/
+
+# NestJS logs
+graph_visualisation_backend/logs/
+
+# NestJS test files
+*.spec.ts
+
+neo4j/
+mysql/
+
+.devcontainer/
+
