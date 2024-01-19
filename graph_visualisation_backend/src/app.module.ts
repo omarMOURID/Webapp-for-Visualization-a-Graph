@@ -2,8 +2,10 @@ import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import * as joi from "joi";
+import * as joi from 'joi';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { Neo4jModule } from './neo4j/neo4j.module';
+import { Neo4jScheme } from './neo4j/neo4j-config.interface';
 
 @Module({
   imports: [
@@ -17,6 +19,12 @@ import { TypeOrmModule } from '@nestjs/typeorm';
         DB_ROOT_PASSWORD: joi.string().required(),
         DB_DATABASE_NAME: joi.string().required(),
         DB_SYNCHRONIZE: joi.boolean().default(true),
+        
+        NEO4J_SCHEME: joi.string().required(),
+        NEO4J_HOST: joi.string().required(),
+        NEO4J_PORT: joi.number().default(''),
+        NEO4J_USERNAME: joi.string().required(),
+        NEO4J_PASSWORD: joi.string().required(),
       })
     }),
     TypeOrmModule.forRootAsync({
@@ -24,7 +32,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
       useFactory: async (configService: ConfigService): Promise<any> => ({
         type: configService.getOrThrow<string>('DB_TYPE'),
         host: configService.getOrThrow<string>('DB_HOST'),
-        port: configService.getOrThrow<number>('DB_PORT'),
+        port: configService.get<number>('DB_PORT'),
         username: configService.getOrThrow<string>('DB_ROOT_USER'),
         password: configService.getOrThrow<string>('DB_ROOT_PASSWORD'),
         database: configService.getOrThrow<string>('DB_DATABASE_NAME'), 
@@ -32,6 +40,17 @@ import { TypeOrmModule } from '@nestjs/typeorm';
         synchronize: configService.getOrThrow<boolean>('DB_SYNCHRONIZE'),
       }),
       inject: [ConfigService],
+    }),
+    Neo4jModule.forRootAsync({
+      imports: [ConfigModule],
+      useFactory: async (configService: ConfigService) => ({
+        scheme: configService.getOrThrow<Neo4jScheme>('NEO4J_SCHEME'),
+        host: configService.getOrThrow<Neo4jScheme>('NEO4J_HOST'),
+        port: configService.getOrThrow<string>('NEO4J_PORT'),
+        username: configService.getOrThrow<string>('NEO4J_USERNAME'),
+        password: configService.getOrThrow<string>('NEO4J_PASSWORD'),
+      }),
+      inject: [ConfigService]
     })
   ],
   controllers: [AppController],
