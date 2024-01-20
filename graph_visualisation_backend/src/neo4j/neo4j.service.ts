@@ -3,6 +3,7 @@ import { NEO4J_CONFIG, NEO4J_CONNECTION } from './neo4j.module';
 import { Driver, Result, Session } from 'neo4j-driver-core';
 import { session } from 'neo4j-driver';
 import { Neo4jConfig } from './neo4j-config.interface';
+
 @Injectable()
 export class Neo4jService {
     /**

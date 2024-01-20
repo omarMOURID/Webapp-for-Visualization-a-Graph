@@ -11,7 +11,8 @@ export class AppController {
 
   @Get()
   async getHello(): Promise<string> {
-    const res = await this.neo4jService.read(`MATCH (n) RETURN count(n) AS count`, "neo4j")
+    const res = await this.neo4jService.read(`MATCH (n) RETURN count(n) AS count`)
+    console.log(res.records);
     return `There are ${res.records[0].get('count')} nodes in the database`
   }
 }
