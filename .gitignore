@@ -15,8 +15,8 @@ graph_visualisation_backend/logs/
 # NestJS test files
 *.spec.ts
 
-neo4j/
-mysql/
+/neo4j/
+/mysql/
 
 .devcontainer/
 

@@ -35,21 +35,21 @@ services:
       - "${DB_DATA_FOLDER}:/var/lib/mysql"
   
   #neo4j:
-  #  image: neo4j:4.4-community
-  #  container_name: neo4j_container
-  #  env_file:
-  #    - .env
-  #  ports:
-  #    - '${NEO4J_INTERFACE_PORT}:7474'
-  #    - '${NEO4J_PORT}:7687'
-  #  environment:
-  #    NEO4J_AUTH: "${NEO4J_USERNAME}/${NEO4J_PASSWORD}"
-  #  volumes:
-  #    - "${NEO4J_DATA_FOLDER}:/data"
-  #    - "${NEO4J_LOGS_FOLDER}:/logs"
-  #    - "${NEO4J_CONF_FOLDER}:/conf"
-  #  networks:
-  #    - lan
+    #image: neo4j:5.1.0-community
+    #container_name: neo4j_container
+    #hostname: localhost
+    #env_file:
+    #  - .env
+    #ports:
+    #  - '${NEO4J_INTERFACE_PORT}:7474'
+    #  - '${NEO4J_PORT}:7687'
+    #environment:
+    #  NEO4J_AUTH: "${NEO4J_USERNAME}/${NEO4J_PASSWORD}"
+    #volumes:
+    #  - "${NEO4J_DATA_FOLDER}:/data"
+    #  - "${NEO4J_LOGS_FOLDER}:/logs"
+    #  - "${NEO4J_CONF_FOLDER}:/conf"
+    #  - "${NEO4J_CONF_FOLDER}/neo4j.conf/:/conf/neo4j.conf"
 
 
     

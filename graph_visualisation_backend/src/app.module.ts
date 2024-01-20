@@ -25,6 +25,7 @@ import { Neo4jScheme } from './neo4j/neo4j-config.interface';
         NEO4J_PORT: joi.number().default(''),
         NEO4J_USERNAME: joi.string().required(),
         NEO4J_PASSWORD: joi.string().required(),
+        NEO4J_DATABASE: joi.string().required(),
       })
     }),
     TypeOrmModule.forRootAsync({
@@ -49,6 +50,7 @@ import { Neo4jScheme } from './neo4j/neo4j-config.interface';
         port: configService.getOrThrow<string>('NEO4J_PORT'),
         username: configService.getOrThrow<string>('NEO4J_USERNAME'),
         password: configService.getOrThrow<string>('NEO4J_PASSWORD'),
+        database: configService.getOrThrow<string>('NEO4J_DATABASE')
       }),
       inject: [ConfigService]
     })
