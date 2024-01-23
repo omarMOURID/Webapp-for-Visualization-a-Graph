@@ -6,6 +6,8 @@ import * as joi from 'joi';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Neo4jModule } from './neo4j/neo4j.module';
 import { Neo4jScheme } from './neo4j/neo4j-config.interface';
+import { GraphModule } from './graph/graph.module';
+import { Neo4jService } from './neo4j/neo4j.service';
 
 @Module({
   imports: [
@@ -42,18 +44,7 @@ import { Neo4jScheme } from './neo4j/neo4j-config.interface';
       }),
       inject: [ConfigService],
     }),
-    Neo4jModule.forRootAsync({
-      imports: [ConfigModule],
-      useFactory: async (configService: ConfigService) => ({
-        scheme: configService.getOrThrow<Neo4jScheme>('NEO4J_SCHEME'),
-        host: configService.getOrThrow<Neo4jScheme>('NEO4J_HOST'),
-        port: configService.getOrThrow<string>('NEO4J_PORT'),
-        username: configService.getOrThrow<string>('NEO4J_USERNAME'),
-        password: configService.getOrThrow<string>('NEO4J_PASSWORD'),
-        database: configService.getOrThrow<string>('NEO4J_DATABASE')
-      }),
-      inject: [ConfigService]
-    })
+    GraphModule
   ],
   controllers: [AppController],
   providers: [AppService],
