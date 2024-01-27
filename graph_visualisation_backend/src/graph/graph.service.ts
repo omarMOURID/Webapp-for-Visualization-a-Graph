@@ -6,6 +6,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { EntityNotFoundError, Repository } from 'typeorm';
 import { ParserService } from './parse/parser.service';
 import { Neo4jEntry, lable, relation } from './graph.types';
+import { PaginationSchema } from 'src/schema/pagination.schema';
 
 @Injectable()
 export class GraphService {
@@ -31,13 +32,26 @@ export class GraphService {
         return graph;
     }
 
+    /**
+     * Finds a graph by its ID and retrieves associated nodes and relations based on optional labels.
+     * 
+     * @param id - The ID of the graph to find.
+     * @param nodeLabels - Optional array of node labels to filter the result.
+     * @param relationLabels - Optional array of relation labels to filter the result.
+     * @returns A Promise resolving to a Graph object with associated nodes and relations.
+     * @throws BadRequestException if there are missing or incorrect parameters in the Neo4j query.
+     * @throws NotFoundException if the graph is not found.
+     */
     async findById(id: string, nodeLabels?: lable[], relationLabels?: relation[]): Promise<Graph & {nodes: any[], relations: any[]}> {
         try {
-            const graph = await this.graphRepository.findOneByOrFail({id});
-
-            const labelsQuery = nodeLabels ? ':'+nodeLabels.map((label) => `${label}`).join('|') : "";
-            const relationsQuery = relationLabels ? ':'+relationLabels.map((label) => `${label}`).join('|'): ""; 
-
+            // Retrieve graph from the database
+            const graph = await this.graphRepository.findOneByOrFail({ id });
+    
+            // Build node and relation label queries
+            const labelsQuery = nodeLabels ? ':' + nodeLabels.map((label) => `${label}`).join('|') : "";
+            const relationsQuery = relationLabels ? ':' + relationLabels.map((label) => `${label}`).join('|') : "";
+    
+            // Execute a Neo4j query to fetch nodes and relations
             const result = await this.neo4jService.read(
                 `MATCH (n ${labelsQuery} {graphId: $graphId})-[r ${relationsQuery} {graphId: $graphId}]-(m ${labelsQuery} {graphId: $graphId})
                 WITH COLLECT(DISTINCT n) as nodes, COLLECT(DISTINCT r) as relations
@@ -46,23 +60,26 @@ export class GraphService {
                     graphId: id,
                 }
             );
-
+    
+            // Extract nodes and relations from the Neo4j query result
             const nodes = result.records[0].get('nodes');
             const relations = result.records[0].get('relations');
-            
+    
+            // Return the assembled object with graph, nodes, and relations
             return {
                 ...graph,
-                description: graph.description,
+                description: graph.description, // Adjust based on your actual graph structure
                 nodes,
-                relations
+                relations,
             };
         } catch (error) {
-            // Handle potential errors during the Neo4j write operation
+            // Handle potential errors during the Neo4j read operation
             if (error.code === 'Neo.ClientError.Statement.ParameterMissing' || error.code === 'Neo.ClientError.Statement.SemanticError') {
                 // Log and throw a BadRequestException for specific Neo4j errors
                 console.error('Missing parameter error:', error);
-                throw new BadRequestException('Missing parameter: ' + error.message); 
-            } if ( error instanceof EntityNotFoundError) {
+                throw new BadRequestException('Missing parameter: ' + error.message);
+            } if (error instanceof EntityNotFoundError) {
+                // Throw a NotFoundException if the graph is not found
                 throw new NotFoundException('Graph not found');
             } else {
                 // Log and rethrow other errors
@@ -70,6 +87,39 @@ export class GraphService {
                 throw error;
             }
         }
+    }
+
+    /**
+     * Retrieves a paginated list of graphs with optional visibility filter.
+     * 
+     * @param page - The page number (default: 1).
+     * @param size - The number of items per page (default: 10).
+     * @param includeNonVisible - Flag to include non-visible graphs (default: false).
+     * @returns A Promise resolving to a PaginationSchema containing the list of graphs.
+     */
+    async find(page: number = 1, size: number = 10, includeNonVisible: boolean = false): Promise<PaginationSchema<Graph>> {
+        // Define pagination options for TypeORM query
+        const options = {
+            skip: (page - 1) * size,
+            take: size,
+            where:{}
+        }
+        // Include visibility filter if includeNonVisible is false
+        !includeNonVisible && (options['where']['isVisible'] = true);
+
+        // Fetch graphs based on pagination options
+        const graphs = await this.graphRepository.find(options);
+
+        // Fetch total count of graphs (for pagination metadata)
+        const count = await this.graphRepository.count();
+
+        // Construct and return pagination result
+        return {
+            items: graphs,
+            pages: Math.ceil(count/size),
+            size,
+            count,
+        };
     }
 
     /**
