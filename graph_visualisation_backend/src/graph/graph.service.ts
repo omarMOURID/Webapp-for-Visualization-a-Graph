@@ -169,11 +169,15 @@ export class GraphService {
             }
         }
     }
-
+        
     /**
-     * Deletes nodes and relationships from the Neo4j graph based on the specified graph identifier.
-     * @param graphId - The identifier for the graph from which the data should be deleted.
+     * Deletes nodes and relationships from the Neo4j graph and corresponding entities from MySQL
+     * based on the specified graph identifiers.
+     * 
+     * @param ids - An array of graph identifiers for data deletion.
      * @returns A Promise that resolves when the deletion is complete.
+     * @throws BadRequestException if the array of graph IDs is empty.
+     * @throws NotFoundException if a specified graph is not found for deletion.
      */
     async delete(ids: string[]): Promise<void> {
         try {
@@ -182,17 +186,19 @@ export class GraphService {
                 throw new BadRequestException('Array of graph IDs is empty');
             }
 
+            // Use TypeORM transaction for atomic operations in MySQL and Neo4j
             await this.entityManager.transaction(async transactionalEntityManager => {
-                // Delete the graph from MySQL (TypeORM)
+                // Delete the graph entities from MySQL (TypeORM)
                 const result = await transactionalEntityManager.delete(Graph, { id: In(ids) });
 
+                // Check if all specified graphs were found for deletion in MySQL
                 if (result.affected !== ids.length) {
                     if (ids.length === 1) {
                         throw new NotFoundException('Specified graph was not found for deletion.');
                     }
                     throw new BadRequestException('Not all specified graphs were found for deletion.');
                 }
-    
+
                 // Step 2: Delete the graph nodes and relationships from Neo4j
                 await this.neo4jService.write(
                     `MATCH (n)-[r]-(m)
@@ -207,9 +213,10 @@ export class GraphService {
 
             return;
         } catch(error) {
-            console.log(error);
+            console.error('Error during deletion operation:', error);
             throw error;
         }
     }
+
 
 }
