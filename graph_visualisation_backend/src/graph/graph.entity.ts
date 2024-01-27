@@ -2,7 +2,7 @@ import { Column, CreateDateColumn, Entity, PrimaryGeneratedColumn, UpdateDateCol
 
 // Defining the entity with the name "Graph"
 @Entity({ name: "Graph" })
-class Graph {
+export class Graph {
     // Primary key column generated as UUID
     @PrimaryGeneratedColumn("uuid")
     id: string;

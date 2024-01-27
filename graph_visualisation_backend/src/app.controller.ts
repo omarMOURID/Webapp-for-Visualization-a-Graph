@@ -1,9 +1,9 @@
-import { Controller, Delete, FileTypeValidator, Get, Param, ParseFilePipe, Post, UploadedFile, UseInterceptors } from '@nestjs/common';
-import { AppService } from './app.service';
-import { Neo4jService } from './neo4j/neo4j.service';
+import { Controller, Delete, FileTypeValidator, Get, Param, ParseFilePipe, Post, Query, UploadedFile, UseInterceptors } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import * as Papa from "papaparse";
 import { GraphService } from './graph/graph.service';
+import { CSVParserService } from './graph/parse/csv-parser.service';
+import { lable, relation } from './graph/graph.types';
+import { Graph } from './graph/graph.entity';
 
 @Controller()
 export class AppController {
@@ -24,15 +24,14 @@ export class AppController {
     ) file: Express.Multer.File,
     @Param('id') graphId: string,
   ): Promise<string> {
-    const content = file.buffer.toString();
-    const result = Papa.parse(content, {
-      header: true,
-      skipEmptyLines: true,
-      dynamicTyping: true,
-    });
-    console.log(result.data);
-    await this.graphService.injectData(result.data, graphId);
+    const parser = new CSVParserService();
+    await this.graphService.injectData(file, graphId, parser);
     return `There are nodes in the database`
+  }
+
+  @Get(":id")
+  async findGraphById(@Param('id') id: string, @Query('labels') labels: lable[], @Query('relations') relations: relation[]): Promise<Graph & {nodes: any[], relations: any[]}> {
+    return this.graphService.findById(id, labels, relations);
   }
 
   @Delete(":id")

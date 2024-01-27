@@ -1,30 +1,76 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
-import { Neo4jError } from 'neo4j-driver';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { Neo4jService } from 'src/neo4j/neo4j.service';
-
-
-type lable = "Species" | "Disease" | "Chemicals";
-type relation = "positive" | "negative" | "neutral";
-
-interface Neo4jEntry {
-    label1: lable;
-    label2: lable;
-    relation: relation;
-    entity1: string;
-    entity2: string;
-    score: number; 
-    PMC_ID: string;
-    sent_id: number; 
-    sentence: string;
-}
-
-
+import { CreateGraphDto } from './dto/create-graph.dto';
+import { Graph } from './graph.entity';
+import { InjectRepository } from '@nestjs/typeorm';
+import { EntityNotFoundError, Repository } from 'typeorm';
+import { ParserService } from './parse/parser.service';
+import { Neo4jEntry, lable, relation } from './graph.types';
 
 @Injectable()
 export class GraphService {
     constructor(
-        private readonly neo4jService: Neo4jService
+        private readonly neo4jService: Neo4jService,
+        @InjectRepository(Graph) private readonly graphRepository: Repository<Graph>,
     ) {}
+
+    /**
+     * Creates a new graph entity based on the provided data and saves it to the database.
+     *
+     * @param {CreateGraphDto} createGraphDto - The data to create the graph entity.
+     * @returns {Promise<Graph>} A Promise that resolves to the created graph entity.
+     */
+    async createGraph(createGraphDto: CreateGraphDto): Promise<Graph> {
+        // Create a new graph instance with the provided data
+        const graph = new Graph(createGraphDto);
+
+        // Save the graph entity to the database
+        await this.graphRepository.save(graph);
+
+        // Return the created graph
+        return graph;
+    }
+
+    async findById(id: string, nodeLabels?: lable[], relationLabels?: relation[]): Promise<Graph & {nodes: any[], relations: any[]}> {
+        try {
+            const graph = await this.graphRepository.findOneByOrFail({id});
+
+            const labelsQuery = nodeLabels ? ':'+nodeLabels.map((label) => `${label}`).join('|') : "";
+            const relationsQuery = relationLabels ? ':'+relationLabels.map((label) => `${label}`).join('|'): ""; 
+
+            const result = await this.neo4jService.read(
+                `MATCH (n ${labelsQuery} {graphId: $graphId})-[r ${relationsQuery} {graphId: $graphId}]-(m ${labelsQuery} {graphId: $graphId})
+                WITH COLLECT(DISTINCT n) as nodes, COLLECT(DISTINCT r) as relations
+                RETURN nodes, relations`,
+                {
+                    graphId: id,
+                }
+            );
+
+            const nodes = result.records[0].get('nodes');
+            const relations = result.records[0].get('relations');
+            
+            return {
+                ...graph,
+                description: graph.description,
+                nodes,
+                relations
+            };
+        } catch (error) {
+            // Handle potential errors during the Neo4j write operation
+            if (error.code === 'Neo.ClientError.Statement.ParameterMissing' || error.code === 'Neo.ClientError.Statement.SemanticError') {
+                // Log and throw a BadRequestException for specific Neo4j errors
+                console.error('Missing parameter error:', error);
+                throw new BadRequestException('Missing parameter: ' + error.message); 
+            } if ( error instanceof EntityNotFoundError) {
+                throw new NotFoundException('Graph not found');
+            } else {
+                // Log and rethrow other errors
+                console.error('Other error:', error);
+                throw error;
+            }
+        }
+    }
 
     /**
      * Injects data into Neo4j graph based on the provided entries.
@@ -33,14 +79,16 @@ export class GraphService {
      * @returns A Promise that resolves when the injection is complete.
      * @throws {BadRequestException} Throws an exception if there is a missing parameter or a semantic error in the Cypher query.
      */
-    async injectData(data:Neo4jEntry[], graphId: string): Promise<void> {
+    async injectData(file: Express.Multer.File, graphId: string, parser: ParserService): Promise<void> {
         try {
+            const data: Neo4jEntry[] = parser.parse(file);
             // Use Promise.all to concurrently execute Neo4j write operations for each entry in the data array
+            console.log(data);
             await Promise.all(data.map(async (entry) => {
                 // Use the Neo4j service to execute a write operation
                 await this.neo4jService.write(
-                    `
                     // Merge nodes and relationship in Neo4j graph based on the provided entry
+                    `
                     MERGE (e1:${entry.label1} {name: $entity1, graphId: $graphId})
                     MERGE (e2:${entry.label2} {name: $entity2, graphId: $graphId})
                     MERGE (e1)-[r:${entry.relation} {score: $score, PMC_ID: $PMC_ID, sent_id: $sent_id, sentence: $sentence, graphId: $graphId}]-(e2)

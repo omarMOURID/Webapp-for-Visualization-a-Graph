@@ -4,6 +4,8 @@ import { Neo4jService } from 'src/neo4j/neo4j.service';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { Neo4jScheme } from 'src/neo4j/neo4j-config.interface';
 import { Neo4jModule } from 'src/neo4j/neo4j.module';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { Graph } from './graph.entity';
 
 @Module({
     imports: [
@@ -19,6 +21,7 @@ import { Neo4jModule } from 'src/neo4j/neo4j.module';
             }),
             inject: [ConfigService]
         }),
+        TypeOrmModule.forFeature([Graph]),
     ],
     providers: [GraphService],
     exports: [GraphService],
