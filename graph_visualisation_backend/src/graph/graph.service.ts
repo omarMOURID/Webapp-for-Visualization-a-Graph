@@ -1,9 +1,9 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import { Neo4jService } from 'src/neo4j/neo4j.service';
 import { CreateGraphDto } from './dto/create-graph.dto';
 import { Graph } from './graph.entity';
 import { InjectRepository } from '@nestjs/typeorm';
-import { EntityNotFoundError, Repository } from 'typeorm';
+import { EntityManager, EntityNotFoundError, In, Repository } from 'typeorm';
 import { ParserService } from './parse/parser.service';
 import { Neo4jEntry, lable, relation } from './graph.types';
 import { PaginationSchema } from 'src/schema/pagination.schema';
@@ -11,6 +11,7 @@ import { PaginationSchema } from 'src/schema/pagination.schema';
 @Injectable()
 export class GraphService {
     constructor(
+        private readonly entityManager: EntityManager,
         private readonly neo4jService: Neo4jService,
         @InjectRepository(Graph) private readonly graphRepository: Repository<Graph>,
     ) {}
@@ -134,15 +135,13 @@ export class GraphService {
             const data: Neo4jEntry[] = parser.parse(file);
             // Use Promise.all to concurrently execute Neo4j write operations for each entry in the data array
             console.log(data);
-            await Promise.all(data.map(async (entry) => {
+            for (const entry of data) {
                 // Use the Neo4j service to execute a write operation
                 await this.neo4jService.write(
                     // Merge nodes and relationship in Neo4j graph based on the provided entry
-                    `
-                    MERGE (e1:${entry.label1} {name: $entity1, graphId: $graphId})
+                    `MERGE (e1:${entry.label1} {name: $entity1, graphId: $graphId})
                     MERGE (e2:${entry.label2} {name: $entity2, graphId: $graphId})
-                    MERGE (e1)-[r:${entry.relation} {score: $score, PMC_ID: $PMC_ID, sent_id: $sent_id, sentence: $sentence, graphId: $graphId}]-(e2)
-                    `,
+                    MERGE (e1)-[r:${entry.relation} {score: $score, PMC_ID: $PMC_ID, sent_id: $sent_id, sentence: $sentence, graphId: $graphId}]-(e2)`,
                     {
                         // Parameters for the Cypher query, values provided by the current entry in the data array
                         entity1: entry.entity1,
@@ -154,7 +153,7 @@ export class GraphService {
                         graphId: graphId
                     }
                 );
-            }));
+            }
     
             return;
         } catch (error) {
@@ -176,20 +175,41 @@ export class GraphService {
      * @param graphId - The identifier for the graph from which the data should be deleted.
      * @returns A Promise that resolves when the deletion is complete.
      */
-    async deleteGraph(graphId: string): Promise<void> {
-        // Use the Neo4j service to execute a write operation for deleting nodes and relationships
-        await this.neo4jService.write(
-            `MATCH (n {graphId: $graphId})
-            DETACH DELETE n
-            `,
-            {
-                // Parameters for the Cypher query, specifying the graphId to identify nodes for deletion
-                graphId: graphId
+    async delete(ids: string[]): Promise<void> {
+        try {
+            // Check if the array of IDs is not empty
+            if (ids.length === 0) {
+                throw new BadRequestException('Array of graph IDs is empty');
             }
-        );
-        
-        // Return a Promise that resolves when the deletion is complete
-        return;
+
+            await this.entityManager.transaction(async transactionalEntityManager => {
+                // Delete the graph from MySQL (TypeORM)
+                const result = await transactionalEntityManager.delete(Graph, { id: In(ids) });
+
+                if (result.affected !== ids.length) {
+                    if (ids.length === 1) {
+                        throw new NotFoundException('Specified graph was not found for deletion.');
+                    }
+                    throw new BadRequestException('Not all specified graphs were found for deletion.');
+                }
+    
+                // Step 2: Delete the graph nodes and relationships from Neo4j
+                await this.neo4jService.write(
+                    `MATCH (n)-[r]-(m)
+                    WHERE n.graphId IN $ids AND m.graphId IN $ids AND r.graphId IN $ids
+                    DETACH DELETE n, r, m
+                    `,
+                    {
+                        ids: ids
+                    }
+                );
+            });
+
+            return;
+        } catch(error) {
+            console.log(error);
+            throw error;
+        }
     }
 
 }
