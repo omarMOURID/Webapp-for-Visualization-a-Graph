@@ -7,6 +7,8 @@ import { EntityManager, EntityNotFoundError, In, Repository } from 'typeorm';
 import { ParserService } from './parse/parser.service';
 import { Neo4jEntry, lable, relation } from './graph.types';
 import { PaginationSchema } from 'src/schema/pagination.schema';
+import { updateGraphDto } from './dto/update-graph.dto';
+import { title } from 'process';
 
 @Injectable()
 export class GraphService {
@@ -31,6 +33,43 @@ export class GraphService {
 
         // Return the created graph
         return graph;
+    }
+
+    /**
+     * Updates a graph with the provided data.
+     *
+     * @param id - The identifier of the graph to be updated.
+     * @param updateGraphDto - The data to update the graph.
+     * @returns The updated graph entity.
+     * @throws NotFoundException if the specified graph is not found.
+     */
+    async updateGraph(id: string, updateGraphDto: updateGraphDto): Promise<Graph> {
+        try {
+            // Attempt to find the graph in the database by its ID
+            const graph = await this.graphRepository.findOneByOrFail({ id });
+
+            // Update the graph entity with the provided data
+            updateGraphDto.title && (graph.title = updateGraphDto.title);
+            updateGraphDto.description && (graph.description = updateGraphDto.description);
+            updateGraphDto.isVisible && (graph.isVisible = updateGraphDto.isVisible);
+
+            // Save the updated graph entity to the database
+            await this.graphRepository.save(graph);
+
+            // Return the updated graph entity
+            return graph;
+        } catch (error) {
+            console.log(error);
+
+            // Check if the error is an EntityNotFoundError
+            if (error instanceof EntityNotFoundError) {
+                // Throw a NotFoundException if the graph is not found
+                throw new NotFoundException('Graph not found');
+            } else {
+                // Re-throw the error if it is not an EntityNotFoundError
+                throw error;
+            }
+        }
     }
 
     /**
@@ -132,6 +171,13 @@ export class GraphService {
      */
     async injectData(file: Express.Multer.File, graphId: string, parser: ParserService): Promise<void> {
         try {
+            // Delete existing nodes and relationships related to the specified graphId
+            await this.neo4jService.write(
+                `MATCH (n {graphId: $graphId})-[r {graphId: $graphId}]-(m {graphId: $graphId})
+                DETACH DELETE n, r, m`,
+                { graphId }
+            );
+            
             const data: Neo4jEntry[] = parser.parse(file);
             // Use Promise.all to concurrently execute Neo4j write operations for each entry in the data array
             console.log(data);
