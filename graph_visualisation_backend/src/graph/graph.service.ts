@@ -8,7 +8,6 @@ import { ParserService } from './parse/parser.service';
 import { Label, Neo4jEntry, Relation } from './graph.types';
 import { PaginationSchema } from 'src/schema/pagination.schema';
 import { updateGraphDto } from './dto/update-graph.dto';
-
 @Injectable()
 export class GraphService {
     constructor(
@@ -58,8 +57,6 @@ export class GraphService {
             // Return the updated graph entity
             return graph;
         } catch (error) {
-            console.log(error);
-
             // Check if the error is an EntityNotFoundError
             if (error instanceof EntityNotFoundError) {
                 // Throw a NotFoundException if the graph is not found
@@ -92,12 +89,10 @@ export class GraphService {
     
             // Execute a Neo4j query to fetch nodes and relations
             const result = await this.neo4jService.read(
-                `MATCH (n ${labelsQuery} {graphId: $graphId})-[r ${relationsQuery} {graphId: $graphId}]-(m ${labelsQuery} {graphId: $graphId})
+                `MATCH (n ${labelsQuery})-[r ${relationsQuery}]-(m ${labelsQuery})
                 WITH COLLECT(DISTINCT n) as nodes, COLLECT(DISTINCT r) as relations
                 RETURN nodes, relations`,
-                {
-                    graphId: id,
-                }
+                id,
             );
     
             // Extract nodes and relations from the Neo4j query result
@@ -172,9 +167,9 @@ export class GraphService {
         try {
             // Delete existing nodes and relationships related to the specified graphId
             await this.neo4jService.write(
-                `MATCH (n {graphId: $graphId})-[r {graphId: $graphId}]-(m {graphId: $graphId})
+                `MATCH (n)-[r]-(m)
                 DETACH DELETE n, r, m`,
-                { graphId }
+                graphId,
             );
             
             const data: Neo4jEntry[] = parser.parse(file);
@@ -184,9 +179,10 @@ export class GraphService {
                 // Use the Neo4j service to execute a write operation
                 await this.neo4jService.write(
                     // Merge nodes and relationship in Neo4j graph based on the provided entry
-                    `MERGE (e1:${entry.label1} {name: $entity1, graphId: $graphId})
-                    MERGE (e2:${entry.label2} {name: $entity2, graphId: $graphId})
-                    MERGE (e1)-[r:${entry.relation} {score: $score, PMC_ID: $PMC_ID, sent_id: $sent_id, sentence: $sentence, graphId: $graphId}]-(e2)`,
+                    `MERGE (e1:${entry.label1} {name: $entity1})
+                    MERGE (e2:${entry.label2} {name: $entity2})
+                    MERGE (e1)-[r:${entry.relation} {score: $score, PMC_ID: $PMC_ID, sent_id: $sent_id, sentence: $sentence}]-(e2)`,
+                    graphId,
                     {
                         // Parameters for the Cypher query, values provided by the current entry in the data array
                         entity1: entry.entity1,
@@ -194,8 +190,7 @@ export class GraphService {
                         score: entry.score,
                         PMC_ID: entry.PMC_ID,
                         sent_id: entry.sent_id,
-                        sentence: entry.sentence,
-                        graphId: graphId
+                        sentence: entry.sentence
                     }
                 );
             }
@@ -244,16 +239,11 @@ export class GraphService {
                     throw new BadRequestException('Not all specified graphs were found for deletion.');
                 }
 
-                // Step 2: Delete the graph nodes and relationships from Neo4j
-                await this.neo4jService.write(
-                    `MATCH (n)-[r]-(m)
-                    WHERE n.graphId IN $ids AND m.graphId IN $ids AND r.graphId IN $ids
-                    DETACH DELETE n, r, m
-                    `,
-                    {
-                        ids: ids
-                    }
-                );
+                await Promise.all(ids.map( async id => {
+                    // Step 2: Delete the graph nodes and relationships from Neo4j
+                    await this.neo4jService.deleteDatabase(id);
+                }));
+                
             });
 
             return;
@@ -262,6 +252,4 @@ export class GraphService {
             throw error;
         }
     }
-
-
 }
