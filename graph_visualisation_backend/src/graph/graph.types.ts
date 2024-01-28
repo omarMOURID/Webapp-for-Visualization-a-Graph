@@ -1,10 +1,19 @@
-export type lable = "Species" | "Disease" | "Chemicals";
-export type relation = "positive" | "negative" | "neutral";
+export enum Label {
+    SPECIES="Species",
+    DISEASE="Disease", 
+    CHEMICALS="Chemicals",
+}
+  
+export enum Relation {
+    POSITIVE="positive",
+    NEGATIVE="negative",
+    NEUTRAL="neutral",
+}
 
 export interface Neo4jEntry {
-    label1: lable;
-    label2: lable;
-    relation: relation;
+    label1: Label;
+    label2: Label;
+    relation: Relation;
     entity1: string;
     entity2: string;
     score: number; 
