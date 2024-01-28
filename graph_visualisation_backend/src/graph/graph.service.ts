@@ -1,14 +1,13 @@
-import { BadRequestException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { Neo4jService } from 'src/neo4j/neo4j.service';
 import { CreateGraphDto } from './dto/create-graph.dto';
 import { Graph } from './graph.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { EntityManager, EntityNotFoundError, In, Repository } from 'typeorm';
 import { ParserService } from './parse/parser.service';
-import { Neo4jEntry, lable, relation } from './graph.types';
+import { Label, Neo4jEntry, Relation } from './graph.types';
 import { PaginationSchema } from 'src/schema/pagination.schema';
 import { updateGraphDto } from './dto/update-graph.dto';
-import { title } from 'process';
 
 @Injectable()
 export class GraphService {
@@ -82,7 +81,7 @@ export class GraphService {
      * @throws BadRequestException if there are missing or incorrect parameters in the Neo4j query.
      * @throws NotFoundException if the graph is not found.
      */
-    async findById(id: string, nodeLabels?: lable[], relationLabels?: relation[]): Promise<Graph & {nodes: any[], relations: any[]}> {
+    async findById(id: string, nodeLabels?: Label[], relationLabels?: Relation[]): Promise<Graph & {nodes: any[], relations: any[]}> {
         try {
             // Retrieve graph from the database
             const graph = await this.graphRepository.findOneByOrFail({ id });
