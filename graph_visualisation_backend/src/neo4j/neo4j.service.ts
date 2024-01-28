@@ -3,13 +3,13 @@ import { NEO4J_CONFIG, NEO4J_CONNECTION } from './neo4j.module';
 import { Driver, Result, Session } from 'neo4j-driver-core';
 import { SessionMode, session } from 'neo4j-driver';
 import { Neo4jConfig } from './neo4j-config.interface';
-import { error } from 'console';
 
 @Injectable()
 export class Neo4jService {
     /**
      * Constructor of the Neo4jService.
      *
+     * @param config - Injected Neo4j configuration.
      * @param driver - Injected Neo4j Driver for database connections.
      */
     constructor(
@@ -69,6 +69,7 @@ export class Neo4jService {
      * Execute a read operation in the specified database using a provided Cypher query.
      *
      * @param cypher - The Cypher query to execute.
+     * @param database - The name of the database.
      * @param params - Optional parameters for the Cypher query.
      * @returns A Promise resolving to the result of the read operation.
      */
@@ -87,6 +88,7 @@ export class Neo4jService {
      * Execute a write operation in the specified database using a provided Cypher query.
      *
      * @param cypher - The Cypher query to execute.
+     * @param database - The name of the database.
      * @param params - Optional parameters for the Cypher query.
      * @returns A Promise resolving to the result of the write operation.
      */
@@ -117,7 +119,7 @@ export class Neo4jService {
         } catch(error) {
             console.log(error);
             throw error;
-            
+
         } finally {
             session.close();
         }
@@ -131,7 +133,13 @@ export class Neo4jService {
     async deleteDatabase(database: string): Promise<void> {
         try {
             // Drop the database
-            await this.write(`DROP DATABASE ${database} IF EXISTS DESTROY DATA`, database);
+            await this.write(
+                `DROP DATABASE $database IF EXISTS DESTROY DATA`, 
+                database, 
+                {
+                    database        
+                }
+            );
         } catch(error) {
             console.log(error)
             throw error;
