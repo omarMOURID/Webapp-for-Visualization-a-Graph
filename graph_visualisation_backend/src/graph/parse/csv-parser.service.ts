@@ -8,6 +8,17 @@ import { Neo4jEntry } from "../graph.types";
  */
 export class CSVParserService implements ParserService {
 
+    private static instance: ParserService;
+
+    private constructor() {}
+
+    static getInstance(): ParserService {
+        if (!this.instance) {
+            this.instance = new CSVParserService();
+        }
+        return this.instance;
+    }
+
     /**
      * Parses the content of a CSV file.
      * 
