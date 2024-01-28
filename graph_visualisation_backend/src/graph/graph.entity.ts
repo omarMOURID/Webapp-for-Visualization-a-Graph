@@ -1,10 +1,25 @@
-import { Column, CreateDateColumn, Entity, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
+import { Column, CreateDateColumn, Entity, PrimaryColumn, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
+import { v4 as uuidv4 } from 'uuid';
+
+function generateCustomId() {
+    const rawUuid = uuidv4() // Generate a UUID
+
+    // Remove hyphens and replace with ''
+    const underscoredUuid = rawUuid.replace(/-/g, '');
+
+
+    // Generate the final custom ID
+    const customId = `${'G'}${underscoredUuid.substring(1)}`;
+
+    return customId;
+}
+
 
 // Defining the entity with the name "Graph"
 @Entity({ name: "Graph" })
 export class Graph {
-    // Primary key column generated as UUID
-    @PrimaryGeneratedColumn("uuid")
+    // Primary key column
+    @PrimaryColumn()
     id: string;
 
     // Title column, a non-nullable varchar of length 100
@@ -43,6 +58,7 @@ export class Graph {
 
     // Constructor allowing the creation of an instance with partial data
     constructor(contact: Partial<Graph>) {
+        this.id = generateCustomId();
         Object.assign(this, contact);
     }
 }
