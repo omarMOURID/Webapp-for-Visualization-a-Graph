@@ -4,10 +4,7 @@ import { AppService } from './app.service';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import * as joi from 'joi';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { Neo4jModule } from './neo4j/neo4j.module';
-import { Neo4jScheme } from './neo4j/neo4j-config.interface';
 import { GraphModule } from './graph/graph.module';
-import { Neo4jService } from './neo4j/neo4j.service';
 
 @Module({
   imports: [

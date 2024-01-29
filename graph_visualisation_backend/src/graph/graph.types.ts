@@ -23,10 +23,10 @@ export interface Neo4jEntry {
 }
 
 // Function to check if a given label is valid based on the Label enum
-const isValidLabel = (label: any): label is Label => Object.values(Label).includes(label);
+export const isValidLabel = (label: any): label is Label => Object.values(Label).includes(label);
 
 // Function to check if a given relation is valid based on the Relation enum
-const isValidRelation = (relation: any): relation is Relation => Object.values(Relation).includes(relation);
+export const isValidRelation = (relation: any): relation is Relation => Object.values(Relation).includes(relation);
 
 /**
  * Function to validate whether an object conforms to the Neo4jEntry interface.

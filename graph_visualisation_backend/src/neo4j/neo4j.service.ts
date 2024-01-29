@@ -24,7 +24,7 @@ export class Neo4jService {
      * @param accessMode - The access mode (READ or WRITE).
      * @returns A session for the specified database.
      */
-    private async getSession(database: string, accessMode: SessionMode): Promise<Session> {
+    public async getSession(database: string, accessMode: SessionMode): Promise<Session> {
         const sessionConfig = {
             database,
             defaultAccessMode: accessMode,

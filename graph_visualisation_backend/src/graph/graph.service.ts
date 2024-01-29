@@ -1,13 +1,15 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { Neo4jService } from 'src/neo4j/neo4j.service';
+import { Neo4jService } from '../neo4j/neo4j.service';
 import { CreateGraphDto } from './dto/create-graph.dto';
 import { Graph } from './graph.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { EntityManager, EntityNotFoundError, In, Repository } from 'typeorm';
 import { ParserService } from './parse/parser.service';
 import { Label, Neo4jEntry, Relation, isNeo4jEntry } from './graph.types';
-import { PaginationSchema } from 'src/schema/pagination.schema';
+import { PaginationSchema } from '../schema/pagination.schema';
 import { updateGraphDto } from './dto/update-graph.dto';
+
+
 @Injectable()
 export class GraphService {
     constructor(
