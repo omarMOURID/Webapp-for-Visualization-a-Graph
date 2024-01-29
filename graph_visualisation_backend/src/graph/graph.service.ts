@@ -5,7 +5,7 @@ import { Graph } from './graph.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { EntityManager, EntityNotFoundError, In, Repository } from 'typeorm';
 import { ParserService } from './parse/parser.service';
-import { Label, Neo4jEntry, Relation } from './graph.types';
+import { Label, Neo4jEntry, Relation, isNeo4jEntry } from './graph.types';
 import { PaginationSchema } from 'src/schema/pagination.schema';
 import { updateGraphDto } from './dto/update-graph.dto';
 @Injectable()
@@ -157,32 +157,51 @@ export class GraphService {
     }
 
     /**
-     * Injects data into Neo4j graph based on the provided entries.
-     * @param data - An array of Neo4jEntry objects representing the data to be injected.
-     * @param graphId - The identifier for the graph in which the data should be injected.
-     * @returns A Promise that resolves when the injection is complete.
+     * Injects data into the Neo4j graph based on the provided entries.
+     * @param {Express.Multer.File} file - The file containing data to be injected.
+     * @param {string} graphId - The identifier for the Neo4j graph where the data should be injected.
+     * @param {ParserService} parser - The parser service used to parse the file into Neo4jEntry objects.
+     * @returns {Promise<void>} A Promise that resolves when the injection is complete.
      * @throws {BadRequestException} Throws an exception if there is a missing parameter or a semantic error in the Cypher query.
      */
-    async injectData(file: Express.Multer.File, graphId: string, parser: ParserService): Promise<void> {
+    async injectData(file: Express.Multer.File, graphId: string, parser: ParserService): Promise<void> { 
+        // Check if the graph exists in the MySQL database
+        const existingGraph = await this.graphRepository.existsBy({ id: graphId });
+        if(!existingGraph) {
+            // Throw a NotFoundException if the graph is not found
+            throw new NotFoundException('Graph not found');
+        }
+
+        // Get a write session for the specified Neo4j graph
+        const session = await this.neo4jService.getWriteSession(graphId);
+
+        // Start a transaction for the injection
+        const transaction = await session.beginTransaction();
+
         try {
-            // Delete existing nodes and relationships related to the specified graphId
-            await this.neo4jService.write(
-                `MATCH (n)-[r]-(m)
-                DETACH DELETE n, r, m`,
-                graphId,
-            );
-            
+            // Parse the file into an array of Neo4jEntry objects
             const data: Neo4jEntry[] = parser.parse(file);
+
+            // Delete existing nodes and relationships related to the specified graphId
+            await transaction.run(
+                `MATCH (n)-[r]-(m)
+                DETACH DELETE n, r, m`
+            );
+
             // Use Promise.all to concurrently execute Neo4j write operations for each entry in the data array
-            console.log(data);
             for (const entry of data) {
+                
+                // Check if the entry conforms to the Neo4jEntry interface
+                if (!isNeo4jEntry(entry)) {
+                    throw new BadRequestException("Please check that the CSV file contains the required information");
+                }
+
                 // Use the Neo4j service to execute a write operation
-                await this.neo4jService.write(
-                    // Merge nodes and relationship in Neo4j graph based on the provided entry
+                await transaction.run(
+                    // Merge nodes and relationships in the Neo4j graph based on the provided entry
                     `MERGE (e1:${entry.label1} {name: $entity1})
                     MERGE (e2:${entry.label2} {name: $entity2})
                     MERGE (e1)-[r:${entry.relation} {score: $score, PMC_ID: $PMC_ID, sent_id: $sent_id, sentence: $sentence}]-(e2)`,
-                    graphId,
                     {
                         // Parameters for the Cypher query, values provided by the current entry in the data array
                         entity1: entry.entity1,
@@ -194,7 +213,10 @@ export class GraphService {
                     }
                 );
             }
-    
+
+            // Commit the transaction to apply the changes to the Neo4j graph
+            await transaction.commit();
+
             return;
         } catch (error) {
             // Handle potential errors during the Neo4j write operation
@@ -207,8 +229,13 @@ export class GraphService {
                 console.error('Other error:', error);
                 throw error;
             }
+        } finally {
+            // Close the transaction and session, regardless of success or failure
+            await transaction.close();
+            await session.close();
         }
     }
+
         
     /**
      * Deletes nodes and relationships from the Neo4j graph and corresponding entities from MySQL
