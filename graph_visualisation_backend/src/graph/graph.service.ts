@@ -3,7 +3,7 @@ import { Neo4jService } from '../neo4j/neo4j.service';
 import { CreateGraphDto } from './dto/create-graph.dto';
 import { Graph } from './graph.entity';
 import { InjectRepository } from '@nestjs/typeorm';
-import { EntityManager, EntityNotFoundError, In, Repository } from 'typeorm';
+import { EntityManager, EntityNotFoundError, In, Like, Raw, Repository } from 'typeorm';
 import { ParserService } from './parse/parser.service';
 import { Label, Neo4jEntry, Relation, isNeo4jEntry } from './graph.types';
 import { PaginationSchema } from '../schema/pagination.schema';
@@ -47,11 +47,11 @@ export class GraphService {
         try {
             // Attempt to find the graph in the database by its ID
             const graph = await this.graphRepository.findOneByOrFail({ id });
-
+            
             // Update the graph entity with the provided data
             updateGraphDto.title && (graph.title = updateGraphDto.title);
             updateGraphDto.description && (graph.description = updateGraphDto.description);
-            updateGraphDto.isVisible && (graph.isVisible = updateGraphDto.isVisible);
+            (updateGraphDto.isVisible !== undefined) && (graph.isVisible = updateGraphDto.isVisible);
 
             // Save the updated graph entity to the database
             await this.graphRepository.save(graph);
@@ -71,40 +71,70 @@ export class GraphService {
     }
 
     /**
+     * Builds parameters and options dynamically based on provided values.
+     * 
+     * @param {Record<string, any>} paramValues - Key-value pairs of parameter values.
+     * @returns {Object} Object containing parameters query and options.
+     */
+    buildParamsAndOptions(paramValues: Record<string, any>): { paramsQuery: string, options: Record<string, any> } {
+        // Build parameters query
+        const paramsQuery = Object.entries(paramValues)
+            .filter(([_, value]) => value !== undefined)
+            .map(([key, value]) => `${key}: $${key}`)
+            .join(', ');
+    
+        // Enclose parameters in curly braces to form a valid Cypher parameter block
+        const paramsQueryBlock = `{${paramsQuery}}`;
+    
+        // Build options object
+        const options = Object.fromEntries(Object.entries(paramValues).filter(([_, value]) => value !== undefined));
+    
+        return { paramsQuery: paramsQueryBlock, options };
+    };
+
+    /**
      * Finds a graph by its ID and retrieves associated nodes and relations based on optional labels.
      * 
-     * @param id - The ID of the graph to find.
-     * @param nodeLabels - Optional array of node labels to filter the result.
-     * @param relationLabels - Optional array of relation labels to filter the result.
-     * @returns A Promise resolving to a Graph object with associated nodes and relations.
-     * @throws BadRequestException if there are missing or incorrect parameters in the Neo4j query.
-     * @throws NotFoundException if the graph is not found.
+     * @param {string} id - The ID of the graph to find.
+     * @param {Label[]} [nodeLabels] - Optional array of node labels to filter the result.
+     * @param {Relation[]} [relationLabels] - Optional array of relation labels to filter the result.
+     * @param {string} [node] - Optional parameter to filter nodes by a specific property (e.g., "name").
+     * @param {string} [pmcid] - Optional parameter to filter relations by a specific property (e.g., "PMC_ID").
+     * @returns {Promise<Graph & {nodes: any[], relations: any[]}>} A Promise resolving to a Graph object with associated nodes and relations.
+     * @throws {BadRequestException} if there are missing or incorrect parameters in the Neo4j query.
+     * @throws {NotFoundException} if the graph is not found.
      */
-    async findById(id: string, nodeLabels?: Label[], relationLabels?: Relation[]): Promise<Graph & {nodes: any[], relations: any[]}> {
+    async findById(id: string, nodeLabels?: Label[], relationLabels?: Relation[], node?: string, pmcid?: string, sentenceid?: number): Promise<Graph & {nodes: any[], relations: any[]}> {
         try {
             // Retrieve graph from the database
             const graph = await this.graphRepository.findOneByOrFail({ id });
-    
+
             // Build node and relation label queries
-            const labelsQuery = nodeLabels ? ':' + nodeLabels.map((label) => `${label}`).join('|') : "";
-            const relationsQuery = relationLabels ? ':' + relationLabels.map((label) => `${label}`).join('|') : "";
-    
+            const NodeslabelsQuery = nodeLabels ? ':' + nodeLabels.map((label) => `${label}`).join('|') : "";
+            const relationsTypeQuery = relationLabels ? ':' + relationLabels.map((label) => `${label}`).join('|') : "";
+
+            // Build the parameter queries and options for filtering nodes and relations
+            const { paramsQuery: relationParamsQuery, options: relationOptions } = this.buildParamsAndOptions({ PMC_ID: pmcid, sent_id: sentenceid });
+            const { paramsQuery: nodeParamsQuery, options: nodeOptions } = this.buildParamsAndOptions({ name: node });
+        
             // Execute a Neo4j query to fetch nodes and relations
-            const result = await this.neo4jService.read(
-                `MATCH (n ${labelsQuery})-[r ${relationsQuery}]-(m ${labelsQuery})
-                WITH COLLECT(DISTINCT n) as nodes, COLLECT(DISTINCT r) as relations
-                RETURN nodes, relations`,
-                id,
-            );
-    
+            const cypherQuery = `
+                MATCH p=(${NodeslabelsQuery} ${nodeParamsQuery})-[r ${relationsTypeQuery} ${relationParamsQuery}]-(${NodeslabelsQuery})
+                WITH DISTINCT nodes(p) AS distinctNodes, r AS relation
+                UNWIND distinctNodes AS node
+                RETURN COLLECT(DISTINCT node) AS nodes, COLLECT(DISTINCT relation) AS relations
+            `;
+
+            // Execute a Neo4j query to fetch nodes and relations
+            const result = await this.neo4jService.read(cypherQuery, id, {...nodeOptions, ...relationOptions});
+
             // Extract nodes and relations from the Neo4j query result
             const nodes = result.records[0].get('nodes');
             const relations = result.records[0].get('relations');
-    
+
             // Return the assembled object with graph, nodes, and relations
             return {
                 ...graph,
-                description: graph.description, // Adjust based on your actual graph structure
                 nodes,
                 relations,
             };
@@ -125,23 +155,29 @@ export class GraphService {
         }
     }
 
+
     /**
-     * Retrieves a paginated list of graphs with optional visibility filter.
+     * Retrieves a paginated list of graphs with optional visibility and search filters.
      * 
      * @param page - The page number (default: 1).
      * @param size - The number of items per page (default: 10).
+     * @param search - Optional search term to filter graphs by title (default: undefined).
      * @param includeNonVisible - Flag to include non-visible graphs (default: false).
      * @returns A Promise resolving to a PaginationSchema containing the list of graphs.
      */
-    async find(page: number = 1, size: number = 10, includeNonVisible: boolean = false): Promise<PaginationSchema<Graph>> {
+    async find(page: number = 1, size: number = 10, search?: string, includeNonVisible: boolean = false): Promise<PaginationSchema<Graph>> {
         // Define pagination options for TypeORM query
         const options = {
             skip: (page - 1) * size,
             take: size,
-            where:{}
+            where: {},
         }
+
         // Include visibility filter if includeNonVisible is false
-        !includeNonVisible && (options['where']['isVisible'] = true);
+        !includeNonVisible && (options.where["isVisible"] = true);
+        
+        // Include search filter if search term is provided
+        search && (options.where["title"] = Like(`%${search}%`));
 
         // Fetch graphs based on pagination options
         const graphs = await this.graphRepository.find(options);
@@ -152,7 +188,7 @@ export class GraphService {
         // Construct and return pagination result
         return {
             items: graphs,
-            pages: Math.ceil(count/size),
+            pages: Math.ceil(count / size),
             size,
             count,
         };
@@ -249,6 +285,7 @@ export class GraphService {
      * @throws NotFoundException if a specified graph is not found for deletion.
      */
     async delete(ids: string[]): Promise<void> {
+        console.log("deleting", ids);
         try {
             // Check if the array of IDs is not empty
             if (ids.length === 0) {

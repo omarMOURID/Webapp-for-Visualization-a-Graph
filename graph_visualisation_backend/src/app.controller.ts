@@ -7,6 +7,7 @@ import { CSVParserService } from './graph/parse/csv-parser.service';
 import { updateGraphDto } from './graph/dto/update-graph.dto';
 import { QueryGraphDto } from './graph/dto/query_graph.dto';
 import { PaginationSchema } from './schema/pagination.schema';
+import { FindGraphsDto } from './graph/dto/find-graphs.dto';
 
 @Controller()
 export class AppController {
@@ -44,12 +45,15 @@ export class AppController {
 
   @Get(":id")
   async findGraphById(@Param('id') id: string, @Query() queryGraphDto: QueryGraphDto): Promise<Graph & {nodes: any[], relations: any[]}> {
-    return this.graphService.findById(id, queryGraphDto.labels, queryGraphDto.relations);
+    const { labels, relations, node, pmcid, sentenceid} = queryGraphDto;
+    return this.graphService.findById(id, labels, relations, node, pmcid, sentenceid);
   }
 
   @Get()
-  async find(@Query("page") page: number, @Query("size") size: number): Promise<PaginationSchema<Graph>> {
-    return this.graphService.find(page, size);
+  async find(@Query() findGraphsDto: FindGraphsDto): Promise<PaginationSchema<Graph>> {
+    const { page, size, search} = findGraphsDto;
+    console.log(findGraphsDto)
+    return this.graphService.find(page, size, search);
   }
 
   @Delete(":id")

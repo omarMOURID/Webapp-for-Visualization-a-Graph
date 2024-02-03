@@ -1,6 +1,5 @@
 import { Module } from '@nestjs/common';
 import { GraphService } from './graph.service';
-import { Neo4jService } from 'src/neo4j/neo4j.service';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { Neo4jScheme } from 'src/neo4j/neo4j-config.interface';
 import { Neo4jModule } from 'src/neo4j/neo4j.module';
