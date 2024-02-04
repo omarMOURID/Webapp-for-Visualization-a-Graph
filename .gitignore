@@ -6,6 +6,7 @@ graph_visualisation_backend/node_modules/
 # NestJS tests
 graph_visualisation_backend/test/
 
+
 # NestJS build output
 graph_visualisation_backend/dist/
 
