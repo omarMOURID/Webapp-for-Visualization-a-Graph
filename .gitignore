@@ -4,7 +4,7 @@
 graph_visualisation_backend/node_modules/
 
 # NestJS tests
-graph_visualisation_backend/test/
+graph_visualisation_backend/src/test/
 
 
 # NestJS build output
