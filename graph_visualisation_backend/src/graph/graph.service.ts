@@ -218,7 +218,7 @@ export class GraphService {
 
         try {
             // Parse the file into an array of Neo4jEntry objects
-            const data: Neo4jEntry[] = parser.parse(file);
+            const data: Neo4jEntry[] = await parser.parse(file);
 
             // Delete existing nodes and relationships related to the specified graphId
             await transaction.run(
@@ -228,11 +228,6 @@ export class GraphService {
 
             // Use Promise.all to concurrently execute Neo4j write operations for each entry in the data array
             for (const entry of data) {
-                
-                // Check if the entry conforms to the Neo4jEntry interface
-                if (!isNeo4jEntry(entry)) {
-                    throw new BadRequestException("Please check that the CSV file contains the required information");
-                }
 
                 // Use the Neo4j service to execute a write operation
                 await transaction.run(

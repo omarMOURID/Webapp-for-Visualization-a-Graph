@@ -27,10 +27,10 @@
     "@nestjs/typeorm": "^10.0.1",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.1",
+    "csv-parse": "^5.5.3",
     "joi": "^17.11.0",
     "mysql2": "^3.7.0",
     "neo4j-driver": "^5.16.0",
-    "papaparse": "^5.4.1",
     "reflect-metadata": "^0.1.13",
     "rxjs": "^7.8.1",
     "typeorm": "^0.3.19"
