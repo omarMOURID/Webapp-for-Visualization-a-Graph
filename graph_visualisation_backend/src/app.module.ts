@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { ConfigModule, ConfigService } from '@nestjs/config';
@@ -6,6 +6,8 @@ import * as joi from 'joi';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Neo4jModule } from './neo4j/neo4j.module';
 import { Neo4jScheme } from './neo4j/neo4j-config.interface';
+import { LoggerModule } from './logger/logger.module';
+import { LoggerMiddleware } from './middlewars/logger.middleware';
 
 @Module({
   imports: [
@@ -53,9 +55,17 @@ import { Neo4jScheme } from './neo4j/neo4j-config.interface';
         database: configService.getOrThrow<string>('NEO4J_DATABASE')
       }),
       inject: [ConfigService]
-    })
+    }),
+    LoggerModule
   ],
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer
+      .apply(LoggerMiddleware)
+      .forRoutes('*'); // Apply the middleware to all routes
+      
+  }
+}
