@@ -3,6 +3,8 @@ import { Neo4jConfig } from './neo4j-config.interface';
 import { ConfigService } from '@nestjs/config';
 import { Neo4jService } from './neo4j.service';
 import neo4j from "neo4j-driver";
+import { LoggerService } from 'src/logger/logger.service';
+import { LoggerModule } from 'src/logger/logger.module';
 
 // Define constants for configuration and connection
 export const NEO4J_CONFIG = "NEO4J_CONFIG";
@@ -16,7 +18,7 @@ export interface Neo4jModuleAsyncOptions {
 }
 
 // Create a function to create a Neo4j database driver
-export const createDatabaseDriver = async (config: Neo4jConfig) => {
+export const createDatabaseDriver = async (config: Neo4jConfig, logger: LoggerService) => {
     try {
         // Extract configuration parameters
         const {scheme, host, port, username, password} = config;
@@ -35,14 +37,15 @@ export const createDatabaseDriver = async (config: Neo4jConfig) => {
 
         // Check the server info and log connection establishment
         const serverInfo = await databaseDriver.getServerInfo();
-        console.log('Connection established');
-        console.log(serverInfo);
+
+        logger.log('Connection established', 'Neo4jModule', serverInfo);
 
         // If everything is OK, return the driver
         return databaseDriver;
     } catch (error) {
         // Handle authentication error
-        console.log(`Connection error\n${error}\nCause: ${error.cause}`);
+
+        logger.error(error.message, error.trace, 'Neo4jModule');
         throw error;
     }
 }
@@ -60,7 +63,10 @@ export class Neo4jModule {
     static forRootAsync(options: Neo4jModuleAsyncOptions): DynamicModule {
         return {
             module: Neo4jModule,
-            imports: options.imports, // Import specified modules
+            imports: [
+                ...options.imports,
+                LoggerModule
+            ], // Import specified modules
             providers: [
                 {
                     provide: NEO4J_CONFIG,
@@ -69,9 +75,9 @@ export class Neo4jModule {
                 },
                 {
                     provide: NEO4J_CONNECTION,
-                    inject: [NEO4J_CONFIG], // Inject the configuration into the factory function
-                    useFactory: async (config: Neo4jConfig) => {
-                        return createDatabaseDriver(config); // Create the Neo4j driver using the configuration
+                    inject: [NEO4J_CONFIG, LoggerService], // Inject the configuration into the factory function
+                    useFactory: async (config: Neo4jConfig, logger: LoggerService) => {
+                        return createDatabaseDriver(config, logger); // Create the Neo4j driver using the configuration
                     }
                 },
                 Neo4jService // Include the Neo4jService as a provider
