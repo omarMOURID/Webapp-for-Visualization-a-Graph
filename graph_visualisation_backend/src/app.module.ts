@@ -4,9 +4,7 @@ import { AppService } from './app.service';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import * as joi from 'joi';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { Neo4jModule } from './neo4j/neo4j.module';
-import { Neo4jScheme } from './neo4j/neo4j-config.interface';
-import { LoggerModule } from './logger/logger.module';
+import { GraphModule } from './graph/graph.module';
 import { LoggerMiddleware } from './middlewars/logger.middleware';
 
 @Module({
@@ -27,7 +25,6 @@ import { LoggerMiddleware } from './middlewars/logger.middleware';
         NEO4J_PORT: joi.number().default(''),
         NEO4J_USERNAME: joi.string().required(),
         NEO4J_PASSWORD: joi.string().required(),
-        NEO4J_DATABASE: joi.string().required(),
       })
     }),
     TypeOrmModule.forRootAsync({
@@ -44,19 +41,7 @@ import { LoggerMiddleware } from './middlewars/logger.middleware';
       }),
       inject: [ConfigService],
     }),
-    Neo4jModule.forRootAsync({
-      imports: [ConfigModule],
-      useFactory: async (configService: ConfigService) => ({
-        scheme: configService.getOrThrow<Neo4jScheme>('NEO4J_SCHEME'),
-        host: configService.getOrThrow<Neo4jScheme>('NEO4J_HOST'),
-        port: configService.getOrThrow<string>('NEO4J_PORT'),
-        username: configService.getOrThrow<string>('NEO4J_USERNAME'),
-        password: configService.getOrThrow<string>('NEO4J_PASSWORD'),
-        database: configService.getOrThrow<string>('NEO4J_DATABASE')
-      }),
-      inject: [ConfigService]
-    }),
-    LoggerModule
+    GraphModule
   ],
   controllers: [AppController],
   providers: [AppService],

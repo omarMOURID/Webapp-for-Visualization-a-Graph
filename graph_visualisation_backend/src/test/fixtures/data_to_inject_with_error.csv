@@ -1,0 +1,52 @@
+PMC_ID,sent_id,sentence,entity1,entity2,label1,label2,relation,score
+PMC10000167,3,These differences in NSC content are of inter,equine,horses,Species,Species,positive,0.866
+PMC10000167,3,These differences in NSC content are of inter,horses,Metabolic dysfunction,Species,Disease,negative,0.992
+PMC10000234,5,The study explores the relationship between,bacteria,virus,Species,Species,neutral,0.5
+PMC10000234,5,The interaction of chemicals with,cells,organs,Chemicals,Species,positive,positive
+PMC10000321,8,A new discovery about the impact of,chemicals,environment,Chemicals,Species,negative,0.88
+PMC10000321,8,Researchers unveil the link between,disease,infection,Disease,Species,positive,0.92
+PMC10000456,12,Effects of the new drug on,cells,tissues,Chemicals,Species,negative,0.78
+PMC10000456,12,The role of,bacteria,immune response,Species,Species,positive,0.91
+PMC10000567,15,Study on the correlation between,disease,genetics,Disease,Species,neutral,0.55
+PMC10000567,15,Genetic factors influencing the susceptibility to,virus,infection,Species,Species,negative,0.81
+PMC10000678,18,Impact of dietary changes on,animals,humans,Species,Species,positive,0.89
+PMC10000678,18,Identification of a novel,chemical,pathway,Chemicals,Species,negative,0.77
+PMC10000789,21,Linking the occurrence of,disease,symptoms,Disease,Species,positive,0.93
+PMC10000789,21,Chemical compounds found in,new drug,chemical,Species,Chemicals,neutral,0.62
+PMC10000890,24,Exploring the relationship between,virus,immune system,Species,Species,negative,0.85
+PMC10000890,24,Novel findings on the role of,chemicals,metabolism,Chemicals,Species,positive,0.94
+PMC10000987,27,Understanding the impact of,bacteria,antibiotics,Species,Chemicals,neutral,0.58
+PMC10000987,27,Association between,chemicals,environmental factors,Chemicals,Species,negative,0.79
+PMC10001098,30,Study on the genetic basis of,disease,inheritance,Disease,Species,positive,0.96
+PMC10001098,30,Effects of,virus,replication on host cells,Species,Species,negative,0.82
+PMC10001123,33,Investigating the link between,chemicals,cellular functions,Chemicals,Species,neutral,0.67
+PMC10001123,33,Role of,virus,immune response modulation,Species,Species,positive,0.97
+PMC10001234,36,Impact of,disease,epidemics,Disease,Species,negative,0.75
+PMC10001234,36,The interaction between,chemicals,toxic substances,Chemicals,Species,positive,0.98
+PMC10001345,39,Genetic factors influencing susceptibility to,infection,disease,Species,Disease,negative,0.86
+PMC10001345,39,Effects of,chemicals,metabolic pathways,Chemicals,Species,positive,0.99
+PMC10001456,42,Understanding the role of,bacteria,host-pathogen interaction,Species,Species,neutral,0.52
+PMC10001456,42,Chemical compounds and their impact on,humans,health,Chemicals,Species,negative,0.73
+PMC10001567,45,Correlation between,disease,symptom severity,Disease,Species,positive,0.91
+PMC10001567,45,Exploring the effects of,virus,immune system modulation,Species,Species,negative,0.79
+PMC10001678,48,Influence of,disease,genetic makeup on treatment response,Disease,Species,neutral,0.64
+PMC10001678,48,Chemical compounds and their role in,animals,physiology,Chemicals,Species,positive,0.88
+PMC10001789,51,Association between,virus,inflammatory response,Species,Species,negative,0.85
+PMC10001789,51,Investigating the impact of,disease,environmental factors,Disease,Species,positive,0.92
+PMC10001890,54,Genetic variations affecting susceptibility to,bacteria,infection,Species,Species,neutral,0.57
+PMC10001890,54,Effects of,chemicals,cellular processes,Chemicals,Species,negative,0.77
+PMC10001987,57,Role of,disease,in immune system regulation,Disease,Species,positive,0.94
+PMC10001987,57,Chemical compounds and their effects on,plants,growth,Chemicals,Species,negative,0.81
+PMC10002098,60,Understanding the genetic basis of,virus,pathogenesis,Species,Species,neutral,0.66
+PMC10002098,60,Impact of,chemicals,toxicity on organisms,Chemicals,Species,positive,0.95
+PMC10002123,63,Correlation between,disease,prognosis and genetic markers,Disease,Species,negative,0.78
+PMC10002123,63,Effects of,bacteria,host interactions on health,Species,Species,positive,0.93
+PMC10002234,66,Influence of,chemicals,environment on health,Chemicals,Species,neutral,0.61
+PMC10002234,66,The link between,disease,immunological response,Disease,Species,positive,0.89
+PMC10002345,69,Association between,bacteria,antibiotic resistance,Species,Species,negative,0.83
+PMC10002345,69,Effects of,chemicals,metabolic disorders,Chemicals,Species,neutral,0.54
+PMC10002456,72,Role of,disease,in neurological disorders,Disease,Species,positive,0.92
+PMC10002456,72,Chemical compounds and their impact on,animals,development,Chemicals,Species,negative,0.76
+PMC10002567,75,Understanding the genetic factors of,virus,transmission,Species,Species,neutral,0.59
+PMC10002567,75,Impact of,disease,environmental exposures on health,Disease,Species,positive,0.87
+PMC10002678,78,Investigating the role of,bacteria,host defense mechanisms,Species,Species,negative,0.84
