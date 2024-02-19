@@ -6,6 +6,7 @@ import * as joi from 'joi';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { GraphModule } from './graph/graph.module';
 import { LoggerMiddleware } from './middlewars/logger.middleware';
+import { LoggerModule } from './logger/logger.module';
 
 @Module({
   imports: [
@@ -41,7 +42,8 @@ import { LoggerMiddleware } from './middlewars/logger.middleware';
       }),
       inject: [ConfigService],
     }),
-    GraphModule
+    GraphModule,
+    LoggerModule
   ],
   controllers: [AppController],
   providers: [AppService],
@@ -51,6 +53,5 @@ export class AppModule implements NestModule {
     consumer
       .apply(LoggerMiddleware)
       .forRoutes('*'); // Apply the middleware to all routes
-      
   }
 }
