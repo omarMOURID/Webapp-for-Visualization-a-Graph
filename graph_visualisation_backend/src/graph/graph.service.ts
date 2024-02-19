@@ -280,7 +280,6 @@ export class GraphService {
      * @throws NotFoundException if a specified graph is not found for deletion.
      */
     async delete(ids: string[]): Promise<void> {
-        console.log("deleting", ids);
         try {
             // Check if the array of IDs is not empty
             if (ids.length === 0) {
