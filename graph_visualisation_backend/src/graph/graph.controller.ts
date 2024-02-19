@@ -81,7 +81,6 @@ export class GraphController {
     @Get()
     async find(@Query() findGraphsDto: FindGraphsDto): Promise<PaginationSchema<Graph>> {
         const { page, size, search} = findGraphsDto;
-        console.log(findGraphsDto)
         return this.graphService.find(page, size, search);
     }
 
