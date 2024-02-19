@@ -44,10 +44,10 @@ export class GraphController {
         })
         ) file: Express.Multer.File,
         @Param('id') graphId: string,
-    ): Promise<string> {
+    ): Promise<void> {
         const parser = CSVParserService.getInstance();
         await this.graphService.injectData(file, graphId, parser);
-        return `There are nodes in the database`
+        return;
     }
 
     /**
