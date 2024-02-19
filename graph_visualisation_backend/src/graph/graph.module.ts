@@ -5,6 +5,7 @@ import { Neo4jScheme } from 'src/neo4j/neo4j-config.interface';
 import { Neo4jModule } from 'src/neo4j/neo4j.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Graph } from './graph.entity';
+import { GraphController } from './graph.controller';
 
 @Module({
     imports: [
@@ -24,5 +25,6 @@ import { Graph } from './graph.entity';
     ],
     providers: [GraphService],
     exports: [GraphService],
+    controllers: [GraphController],
 })
 export class GraphModule {}

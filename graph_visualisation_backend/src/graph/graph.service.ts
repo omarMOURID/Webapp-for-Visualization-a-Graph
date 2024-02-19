@@ -7,7 +7,7 @@ import { EntityManager, EntityNotFoundError, In, Like, Raw, Repository } from 't
 import { ParserService } from './parse/parser.service';
 import { Label, Neo4jEntry, Relation, isNeo4jEntry } from './graph.types';
 import { PaginationSchema } from '../schema/pagination.schema';
-import { updateGraphDto } from './dto/update-graph.dto';
+import { UpdateGraphDto } from './dto/update-graph.dto';
 
 
 @Injectable()
@@ -43,7 +43,7 @@ export class GraphService {
      * @returns The updated graph entity.
      * @throws NotFoundException if the specified graph is not found.
      */
-    async updateGraph(id: string, updateGraphDto: updateGraphDto): Promise<Graph> {
+    async updateGraph(id: string, updateGraphDto: UpdateGraphDto): Promise<Graph> {
         try {
             // Attempt to find the graph in the database by its ID
             const graph = await this.graphRepository.findOneByOrFail({ id });
@@ -141,15 +141,13 @@ export class GraphService {
         } catch (error) {
             // Handle potential errors during the Neo4j read operation
             if (error.code === 'Neo.ClientError.Statement.ParameterMissing' || error.code === 'Neo.ClientError.Statement.SemanticError') {
-                // Log and throw a BadRequestException for specific Neo4j errors
-                console.error('Missing parameter error:', error);
+                // throw a BadRequestException for specific Neo4j errors
                 throw new BadRequestException('Missing parameter: ' + error.message);
             } if (error instanceof EntityNotFoundError) {
                 // Throw a NotFoundException if the graph is not found
                 throw new NotFoundException('Graph not found');
             } else {
-                // Log and rethrow other errors
-                console.error('Other error:', error);
+                // rethrow other errors
                 throw error;
             }
         }
@@ -254,12 +252,10 @@ export class GraphService {
         } catch (error) {
             // Handle potential errors during the Neo4j write operation
             if (error.code === 'Neo.ClientError.Statement.ParameterMissing' || error.code === 'Neo.ClientError.Statement.SemanticError') {
-                // Log and throw a BadRequestException for specific Neo4j errors
-                console.error('Missing parameter error:', error);
+                // throw a BadRequestException for specific Neo4j errors
                 throw new BadRequestException('Missing parameter: ' + error.message);
             } else {
-                // Log and rethrow other errors
-                console.error('Other error:', error);
+                // rethrow other errors
                 throw error;
             }
         } finally {
@@ -308,7 +304,6 @@ export class GraphService {
 
             return;
         } catch(error) {
-            console.error('Error during deletion operation:', error);
             throw error;
         }
     }
