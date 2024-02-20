@@ -1,4 +1,5 @@
 import { IsInt, IsNotEmpty, IsOptional, IsBoolean, IsString } from 'class-validator';
+import { ApiProperty } from '@nestjs/swagger';
 
 /**
  * Data transfer object (DTO) for finding graphs.
@@ -10,25 +11,44 @@ import { IsInt, IsNotEmpty, IsOptional, IsBoolean, IsString } from 'class-valida
  */
 export class FindGraphsDto {
 
-    // The page number for pagination.
+    @ApiProperty({
+        type: Number,
+        description: 'The page number for pagination.',
+        required: false,
+        default: 1
+    })
     @IsInt()
     @IsNotEmpty()
     @IsOptional()
     page?: number = 1;
 
-    // The number of items per page for pagination.
+    @ApiProperty({
+        type: Number,
+        description: 'The number of items per page for pagination.',
+        required: false,
+        default: 10
+    })
     @IsInt()
     @IsNotEmpty()
     @IsOptional()
     size?: number = 10;
 
-    // Indicates whether to include non-visible graphs in the results.
+    @ApiProperty({
+        type: Boolean,
+        description: 'Indicates whether to include non-visible graphs in the results.',
+        required: false,
+        default: false
+    })
     @IsBoolean()
     @IsNotEmpty()
     @IsOptional()
     includeNonVisible?: boolean = false;
 
-    // A search query to filter graphs.
+    @ApiProperty({
+        type: String,
+        description: 'A search query to filter graphs (graph titles).',
+        required: false
+    })
     @IsString()
     @IsNotEmpty()
     @IsOptional()

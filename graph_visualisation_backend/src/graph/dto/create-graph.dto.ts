@@ -1,4 +1,5 @@
 import { IsNotEmpty, IsOptional, IsString } from "class-validator";
+import { ApiProperty } from "@nestjs/swagger";
 
 /**
  * Data transfer object (DTO) for creating a new graph.
@@ -8,12 +9,22 @@ import { IsNotEmpty, IsOptional, IsString } from "class-validator";
  */
 export class CreateGraphDto {
 
-    // The title of the graph.
+    @ApiProperty({
+        type: String,
+        description: 'The title of the graph.',
+        required: true,
+        example: 'Graph 1'
+    })
     @IsString()
     @IsNotEmpty()
     title: string;
 
-    // An optional description of the graph.
+    @ApiProperty({
+        type: String,
+        description: 'An optional description of the graph.',
+        required: false,
+        example: 'This graph represents...'
+    })
     @IsString()
     @IsOptional()
     description: string;

@@ -1,3 +1,4 @@
+import { ApiProperty } from "@nestjs/swagger";
 import { Exclude } from "class-transformer";
 import { Column, CreateDateColumn, Entity, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
 
@@ -13,10 +14,12 @@ export enum UserRole {
 @Entity({ name: "user" })
 export class User {
     /** Unique identifier for the user. */
+    @ApiProperty()
     @PrimaryGeneratedColumn("uuid")
     id: string;
 
     /** The user's first name. */
+    @ApiProperty()
     @Column({
         name: "firstname",
         nullable: false,
@@ -26,6 +29,7 @@ export class User {
     firstname: string;
 
     /** The user's last name. */
+    @ApiProperty()
     @Column({
         name: "lastname",
         nullable: false,
@@ -35,6 +39,7 @@ export class User {
     lastname: string;
 
     /** The user's email address (must be unique). */
+    @ApiProperty()
     @Column({
         name: "email",
         nullable: false,
@@ -63,6 +68,7 @@ export class User {
     passwordSalt: string;
 
     /** The roles of the user. */
+    @ApiProperty()
     @Column({
         name: "roles",
         nullable: false,
@@ -73,10 +79,12 @@ export class User {
     roles: UserRole;
 
     /** The timestamp when the user was created. */
+    @ApiProperty()
     @CreateDateColumn({ name: 'created_at' })
     createdAt: Date;
 
     /** The timestamp when the user was last updated. */
+    @ApiProperty()
     @UpdateDateColumn({ name: 'updated_at' })
     updatedAt: Date;
 

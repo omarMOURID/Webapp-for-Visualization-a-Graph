@@ -1,3 +1,4 @@
+import { ApiProperty } from "@nestjs/swagger";
 import { Column, CreateDateColumn, Entity, PrimaryColumn, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
 import { v4 as uuidv4 } from 'uuid';
 
@@ -20,6 +21,7 @@ function generateCustomId() {
 export class Graph {
     // Primary key column
     @PrimaryColumn()
+    @ApiProperty()
     id: string;
 
     // Title column, a non-nullable varchar of length 100
@@ -29,6 +31,7 @@ export class Graph {
         type: "varchar",
         length: 100
     })
+    @ApiProperty()
     title: string;
 
     // Description column, nullable text type
@@ -37,6 +40,7 @@ export class Graph {
         nullable: true,
         type: "text",
     })
+    @ApiProperty()
     description: string;
 
     // Visibility column, a non-nullable boolean with a default value of true
@@ -46,14 +50,17 @@ export class Graph {
         type: "boolean",
         default: true, 
     })
+    @ApiProperty()
     isVisible: boolean;
 
     // Created at column, automatically populated with the creation timestamp
     @CreateDateColumn({ name: 'created_at'})
+    @ApiProperty()
     createdAt: Date;
 
     // Updated at column, automatically updated with the timestamp of the last update
     @UpdateDateColumn({ name: 'updated_at'})
+    @ApiProperty()
     updatedAt: Date;
 
     // Constructor allowing the creation of an instance with partial data

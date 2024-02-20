@@ -1,4 +1,5 @@
 import { IsEnum, IsNotEmpty, IsOptional, IsString } from "class-validator";
+import { ApiProperty } from "@nestjs/swagger";
 import { UserRole } from "../user.entity";
 
 /**
@@ -7,23 +8,36 @@ import { UserRole } from "../user.entity";
  */
 export class UpdateUserDto {
     /** The first name of the user. */
+    @ApiProperty({
+        type: String,
+        description: 'The first name of the user.',
+        required: false
+    })
     @IsString()
     @IsNotEmpty()
     @IsOptional()
-    // Optional field for updating first name
     firstname?: string;
 
     /** The last name of the user. */
+    @ApiProperty({
+        type: String,
+        description: 'The last name of the user.',
+        required: false
+    })
     @IsString()
     @IsNotEmpty()
     @IsOptional()
-    // Optional field for updating last name
     lastname?: string;
 
     /** The role of the user (e.g., USER or ADMIN). */
+    @ApiProperty({
+        type: String,
+        enum: UserRole,
+        description: 'The role of the user (e.g., USER or ADMIN).',
+        required: false
+    })
     @IsEnum(UserRole)
     @IsNotEmpty()
     @IsOptional()
-    // Optional field for updating user role
     role?: UserRole;
 }
