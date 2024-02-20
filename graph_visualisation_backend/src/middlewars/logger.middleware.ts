@@ -9,6 +9,9 @@ export class LoggerMiddleware implements NestMiddleware {
   use(req: Request, res: Response, next: NextFunction) {
     const { ip, method, url, params, query, body } = req;
 
+    const isAuthUrl = (url+params[0]).includes('/auth');
+    const isUserUrl = (url+params[0]).includes('/user');
+
     res.on("finish", () => {
         const { statusCode, statusMessage } = res;
         const contentlength = res.get('content-length');
@@ -24,10 +27,9 @@ export class LoggerMiddleware implements NestMiddleware {
                     method,
                     statusCode,
                     contentlength,
-                    url,
-                    params,
+                    url: url + params[0],
                     query,
-                    body,
+                    body: isAuthUrl || isUserUrl ? "[REDACTED]" : body, 
                 },
             );
         } else {
@@ -40,10 +42,9 @@ export class LoggerMiddleware implements NestMiddleware {
                     method,
                     statusCode,
                     contentlength,
-                    url,
-                    params,
+                    url: url+params[0],
                     query,
-                    body,
+                    body: isAuthUrl || isUserUrl ? "[REDACTED]" : body, 
                 },
             );
         }

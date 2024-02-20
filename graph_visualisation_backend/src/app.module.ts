@@ -7,6 +7,8 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { GraphModule } from './graph/graph.module';
 import { LoggerMiddleware } from './middlewars/logger.middleware';
 import { LoggerModule } from './logger/logger.module';
+import { AuthModule } from './auth/auth.module';
+import { UserModule } from './user/user.module';
 
 @Module({
   imports: [
@@ -26,6 +28,9 @@ import { LoggerModule } from './logger/logger.module';
         NEO4J_PORT: joi.number().default(''),
         NEO4J_USERNAME: joi.string().required(),
         NEO4J_PASSWORD: joi.string().required(),
+
+        JWT_SECRET: joi.string().required(),
+        JWT_EXPIRE: joi.string().required(),
       })
     }),
     TypeOrmModule.forRootAsync({
@@ -43,7 +48,9 @@ import { LoggerModule } from './logger/logger.module';
       inject: [ConfigService],
     }),
     GraphModule,
-    LoggerModule
+    LoggerModule,
+    AuthModule,
+    UserModule
   ],
   controllers: [AppController],
   providers: [AppService],
