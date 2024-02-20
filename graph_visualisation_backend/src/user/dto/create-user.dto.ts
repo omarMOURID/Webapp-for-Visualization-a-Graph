@@ -1,0 +1,48 @@
+import { IsEmail, IsEnum, IsNotEmpty, IsString, IsStrongPassword } from "class-validator";
+import { UserRole } from "../user.entity";
+
+/**
+ * Data transfer object (DTO) for user signup.
+ * Contains the necessary fields to create a new user.
+ */
+export class CreateUserDto {
+    /** The first name of the user. */
+    @IsString()
+    @IsNotEmpty()
+    firstname: string;
+
+    /** The last name of the user. */
+    @IsString()
+    @IsNotEmpty()
+    lastname: string;
+
+    /** The email address of the user. */
+    @IsEmail()
+    @IsNotEmpty()
+    email: string;
+
+    /** The role of the user (e.g., USER or ADMIN). */
+    @IsEnum(UserRole)
+    @IsNotEmpty()
+    role: UserRole;
+
+    /**
+     * The password of the user. 
+     * Must be at least 8 characters long, containing at least 1 lowercase letter, 
+     * 1 uppercase letter, and 1 number.
+     */
+    @IsStrongPassword({
+        minLength: 8,
+        minLowercase: 1,
+        minUppercase: 1,
+        minNumbers: 1,
+        minSymbols: 0,   
+    })
+    @IsNotEmpty()
+    password: string;
+
+    /** The confirmation of the password. */
+    @IsString()
+    @IsNotEmpty()
+    confirmPassword: string;
+}
