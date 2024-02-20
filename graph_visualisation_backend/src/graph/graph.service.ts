@@ -110,8 +110,8 @@ export class GraphService {
             const graph = await this.graphRepository.findOneByOrFail({ id });
 
             // Build node and relation label queries
-            const NodeslabelsQuery = nodeLabels ? ':' + nodeLabels.map((label) => `${label}`).join('|') : "";
-            const relationsTypeQuery = relationLabels ? ':' + relationLabels.map((label) => `${label}`).join('|') : "";
+            const NodeslabelsQuery = nodeLabels ? Array.isArray(nodeLabels) ? ':' + nodeLabels.map((label) => `${label}`).join('|') : ':' + nodeLabels : "";
+            const relationsTypeQuery = relationLabels ? Array.isArray(relationLabels) ? ':' + relationLabels.map((label) => `${label}`).join('|') : ":" + relationLabels : "";
 
             // Build the parameter queries and options for filtering nodes and relations
             const { paramsQuery: relationParamsQuery, options: relationOptions } = this.buildParamsAndOptions({ PMC_ID: pmcid, sent_id: sentenceid });
