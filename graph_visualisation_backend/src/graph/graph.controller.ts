@@ -60,7 +60,7 @@ export class GraphController {
             }
         }
     })
-    @ApiResponse({ status: 200, description: 'Returns a message indicating the success of the operation.' })
+    @ApiResponse({ status: 201 })
     @HasRoles(UserRole.ADMIN)
     @UseGuards(AuthGuard("jwt"), RolesGuard)
     @UseInterceptors(FileInterceptor('file'))
