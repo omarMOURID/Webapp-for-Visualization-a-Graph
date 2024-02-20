@@ -6,6 +6,7 @@ import { Neo4jModule } from 'src/neo4j/neo4j.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Graph } from './graph.entity';
 import { GraphController } from './graph.controller';
+import { AuthModule } from 'src/auth/auth.module';
 
 @Module({
     imports: [
@@ -22,6 +23,7 @@ import { GraphController } from './graph.controller';
             inject: [ConfigService]
         }),
         TypeOrmModule.forFeature([Graph]),
+        AuthModule,
     ],
     providers: [GraphService],
     exports: [GraphService],
