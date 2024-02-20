@@ -1,7 +1,6 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { User } from './user.entity';
-import { Repository } from 'typeorm';
+import { BadRequestException, ConflictException, Injectable, UnauthorizedException } from '@nestjs/common';
+import { User } from '../user/user.entity';
+import { EntityManager, Repository } from 'typeorm';
 import { SignUpDto } from './dto/sign-up.dto';
 import * as bcrypt from "bcrypt";
 import { JwtService } from '@nestjs/jwt';
@@ -13,7 +12,7 @@ import { LoginDto } from './dto/login.dto';
 @Injectable()
 export class AuthService {
     constructor(
-        @InjectRepository(User) private readonly userRepository: Repository<User>,
+        private readonly entityManager: EntityManager,
         private readonly jwtService: JwtService
     ) {}
 
@@ -23,34 +22,49 @@ export class AuthService {
      * @returns An object containing the JWT token.
      */
     async signUp(signUpDto: SignUpDto): Promise<{ token: string }> {
-        const { firstname, lastname, email, password } = signUpDto;
+        try {
+            const { firstname, lastname, email, password, confirmPassword } = signUpDto;
 
-        // Generate a salt and hash the password
-        const passwordSalt = await bcrypt.genSalt();
-        const hashedPassword = await bcrypt.hash(password, passwordSalt);
+            // Check if new password and confirm password match
+            if (password !== confirmPassword) {
+                throw new BadRequestException("Passwords do not match.");
+            }
 
-        // Create a new user entity
-        const user = new User({
-            firstname: firstname,
-            lastname: lastname,
-            email: email,
-            password: hashedPassword,
-            passwordSalt: passwordSalt
-        });
+            // Generate a salt and hash the password
+            const passwordSalt = await bcrypt.genSalt();
+            const hashedPassword = await bcrypt.hash(password, passwordSalt);
 
-        // Save the user to the database
-        await this.userRepository.save(user);
+            // Create a new user entity
+            const user = new User({
+                firstname: firstname,
+                lastname: lastname,
+                email: email,
+                password: hashedPassword,
+                passwordSalt: passwordSalt
+            });
 
-        // Generate JWT token with user details
-        const token = this.jwtService.sign({
-            id: user.id,
-            firstname: user.firstname,
-            lastname: user.lastname,
-            email: user.email,
-            role: user.roles
-        });
+            // Save the user to the database
+            await this.entityManager.save(user);
 
-        return { token };
+            // Generate JWT token with user details
+            const token = this.jwtService.sign({
+                id: user.id,
+                firstname: user.firstname,
+                lastname: user.lastname,
+                email: user.email,
+                role: user.roles
+            });
+
+            return { token };
+        } catch(error) {
+            // Handle specific error types, e.g., unique constraint violation
+            if (error.code === "ER_DUP_ENTRY") {
+                throw new ConflictException('Email already exists');
+            }
+            // Handle other errors or rethrow
+            throw error;
+        }
+        
     }
 
     /**
@@ -63,7 +77,7 @@ export class AuthService {
         const { email, password } = loginDto;
         
         // Find the user by email
-        const user = await this.userRepository.findOneBy({ email });
+        const user = await this.entityManager.findOneBy(User, { email });
 
         // If user is not found, throw an exception
         if (!user) {

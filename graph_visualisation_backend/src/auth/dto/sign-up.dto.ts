@@ -33,4 +33,9 @@ export class SignUpDto {
     })
     @IsNotEmpty()
     password: string;
+
+    /** The confirmation of the new password. */
+    @IsString()
+    @IsNotEmpty()
+    confirmPassword: string;
 }
