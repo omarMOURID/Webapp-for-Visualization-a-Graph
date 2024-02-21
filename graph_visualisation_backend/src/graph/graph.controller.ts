@@ -5,7 +5,7 @@ import { CreateGraphDto } from './dto/create-graph.dto';
 import { Graph } from './graph.entity';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { CSVParserService } from './parse/csv-parser.service';
-import { FindGraphsDto } from './dto/find-graphs.dto';
+import { FindGraphsDtoAdmin, FindGraphsDtoUser } from './dto/find-graphs.dto';
 import { QueryGraphDto } from './dto/query_graph.dto';
 import { PaginationSchema } from 'src/schema/pagination.schema';
 import { UpdateGraphDto } from './dto/update-graph.dto';
@@ -105,7 +105,7 @@ export class GraphController {
     @ApiOperation({ summary: 'Finds and retrieves a paginated list of graphs' })
     @ApiResponse({ status: 200, description: 'Returns a paginated list of graphs.' })
     @Get()
-    async find(@Query() findGraphsDto: FindGraphsDto): Promise<PaginationSchema<Graph>> {
+    async find(@Query() findGraphsDto: FindGraphsDtoUser): Promise<PaginationSchema<Graph>> {
         const { page, size, search} = findGraphsDto;
         return this.graphService.find(page, size, search);
     }
@@ -121,7 +121,7 @@ export class GraphController {
     @HasRoles(UserRole.ADMIN)
     @UseGuards(AuthGuard("jwt"), RolesGuard)
     @Get("/all")
-    async findAll(@Query() findGraphsDto: FindGraphsDto): Promise<PaginationSchema<Graph>> {
+    async findAll(@Query() findGraphsDto: FindGraphsDtoAdmin): Promise<PaginationSchema<Graph>> {
         const { page, size, search} = findGraphsDto;
         return this.graphService.find(page, size, search, true);
     }

@@ -9,7 +9,7 @@ import { ApiProperty } from '@nestjs/swagger';
  * - includeNonVisible: Indicates whether to include non-visible graphs in the results. (optional, default: false)
  * - search: A search query to filter graphs. (optional)
  */
-export class FindGraphsDto {
+export class FindGraphsDtoUser {
 
     @ApiProperty({
         type: Number,
@@ -34,6 +34,18 @@ export class FindGraphsDto {
     size?: number = 10;
 
     @ApiProperty({
+        type: String,
+        description: 'A search query to filter graphs (graph titles).',
+        required: false
+    })
+    @IsString()
+    @IsNotEmpty()
+    @IsOptional()
+    search?: string;
+}
+
+export class FindGraphsDtoAdmin extends FindGraphsDtoUser{
+    @ApiProperty({
         type: Boolean,
         description: 'Indicates whether to include non-visible graphs in the results.',
         required: false,
@@ -43,14 +55,4 @@ export class FindGraphsDto {
     @IsNotEmpty()
     @IsOptional()
     includeNonVisible?: boolean = false;
-
-    @ApiProperty({
-        type: String,
-        description: 'A search query to filter graphs (graph titles).',
-        required: false
-    })
-    @IsString()
-    @IsNotEmpty()
-    @IsOptional()
-    search?: string;
 }
