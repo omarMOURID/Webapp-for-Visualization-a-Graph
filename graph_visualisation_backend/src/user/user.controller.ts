@@ -11,6 +11,7 @@ import { Request } from 'express';
 import { PaginationSchema } from 'src/schema/pagination.schema';
 import { FindUsersDto } from './dto/find-users.dto';
 import { UpdatePasswordDto } from './dto/update-password.dto';
+import { BlockUserDto } from './dto/block-user.dto';
 
 @ApiTags('user') // Tag the controller with 'user' for Swagger documentation
 @Controller('user')
@@ -57,6 +58,30 @@ export class UserController {
         await this.userService.updateUser(user.id, updateUserDto);
         return;
     }
+
+    /**
+     * Updates the block status of a user.
+     * @param id The ID of the user to update.
+     * @param blockUserDto The data to update the user's block status.
+     * @returns A Promise that resolves to void.
+     * @permissions ADMIN
+    */
+    @ApiBearerAuth()
+    @ApiOperation({ summary: 'Updates the block status of a user (ADMIN)' }) // Add operation summary
+    @ApiBody({ type: BlockUserDto }) // Specify the DTO type for request body
+    @ApiResponse({ status: 200, description: 'Returns void.' }) // Specify the response status and description
+    @HasRoles(UserRole.ADMIN)
+    @UseGuards(AuthGuard("jwt"), RolesGuard)
+    @Put("/block/:id")
+    async updateBlockUser(
+        @Param("id") id: string, // The ID of the user to update
+        @Body() blockUserDto: BlockUserDto // The data to update the user's block status
+    ): Promise<void> {
+        // Update the block status of the user with the specified ID
+        await this.userService.updateBlockUser(id, blockUserDto);
+        return;
+    }
+
 
    /**
      * Updates the password of the current user.

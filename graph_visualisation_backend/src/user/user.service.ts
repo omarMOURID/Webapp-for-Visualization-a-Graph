@@ -7,6 +7,7 @@ import * as bcrypt from "bcrypt";
 import { UpdateUserDto } from './dto/update-user.dto';
 import { PaginationSchema } from 'src/schema/pagination.schema';
 import { UpdatePasswordDto } from './dto/update-password.dto';
+import { BlockUserDto } from './dto/block-user.dto';
 
 /**
  * Service responsible for handling user-related database operations.
@@ -81,6 +82,31 @@ export class UserService {
 
         return;
     } 
+
+    /**
+     * Updates the block status of a user.
+     * @param id The ID of the user to update.
+     * @param blocked The new block status of the user.
+     * @returns A Promise that resolves to void.
+    */
+    async updateBlockUser(id: string, blockUserDto: BlockUserDto): Promise<void> {
+        // Find the user by ID
+        const user = await this.userRepository.findOneBy({id});
+
+        // If user not found, throw NotFoundException
+        if (!user) {
+            throw new NotFoundException("User not found");
+        }
+
+        // Update the block status
+        user.blocked = blockUserDto.blocked;
+
+        // Save the updated user to the database
+        await this.userRepository.save(user);
+
+        // Return void
+        return;
+    }
     
     /**
     * Update user password.

@@ -84,6 +84,11 @@ export class AuthService {
             throw new UnauthorizedException("Invalid email or password");
         }
 
+        // If user is blocked, throw an exception
+        if (user.blocked === true) {
+            throw new UnauthorizedException("Access Denied");
+        }
+
         // Compare the provided password with the hashed password stored in the database
         const passwordIsMatched = await bcrypt.compare(password, user.password);
 

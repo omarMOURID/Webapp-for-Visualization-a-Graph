@@ -163,7 +163,7 @@ export class GraphService {
      * @param includeNonVisible - Flag to include non-visible graphs (default: false).
      * @returns A Promise resolving to a PaginationSchema containing the list of graphs.
      */
-    async find(page: number = 1, size: number = 10, search?: string, includeNonVisible: boolean = false): Promise<PaginationSchema<Graph>> {
+    async find(page: number, size: number, search?: string, includeNonVisible: boolean = false): Promise<PaginationSchema<Graph>> {
         // Define pagination options for TypeORM query
         const options = {
             skip: (page - 1) * size,
@@ -181,7 +181,7 @@ export class GraphService {
         const graphs = await this.graphRepository.find(options);
 
         // Fetch total count of graphs (for pagination metadata)
-        const count = await this.graphRepository.count();
+        const count = await this.graphRepository.count({where: options.where});
 
         // Construct and return pagination result
         return {

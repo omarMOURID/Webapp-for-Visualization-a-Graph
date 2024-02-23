@@ -88,6 +88,16 @@ export class User {
     @UpdateDateColumn({ name: 'updated_at' })
     updatedAt: Date;
 
+    /** If the user is blocked */
+    @ApiProperty()
+    @Column({
+        name: "blocked",
+        nullable: false,
+        type: "boolean",
+        default: false,
+    })
+    blocked: boolean;
+
     /**
      * Creates a new instance of the User class.
      * @param contact Partial data to initialize the user instance.
