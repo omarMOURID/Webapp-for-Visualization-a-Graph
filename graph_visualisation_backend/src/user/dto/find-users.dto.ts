@@ -1,4 +1,4 @@
-import { IsInt, IsNotEmpty, IsOptional } from "class-validator";
+import { IsInt, IsNotEmpty, IsOptional, IsString } from "class-validator";
 import { ApiProperty } from "@nestjs/swagger";
 
 /**
@@ -20,4 +20,15 @@ export class FindUsersDto {
     @IsNotEmpty()
     @IsOptional()
     size?: number = 10;
+
+    /** A search query to filter user (user name). */
+    @ApiProperty({
+        type: String,
+        description: 'A search query to filter users (user name).',
+        required: false
+    })
+    @IsString()
+    @IsNotEmpty()
+    @IsOptional()
+    search?: string;
 }

@@ -177,6 +177,6 @@ export class UserController {
     @UseInterceptors(ClassSerializerInterceptor)
     @Get()
     async findUsers(@Query() findUsersDto: FindUsersDto): Promise<PaginationSchema<User>> {
-        return await this.userService.find(findUsersDto.page, findUsersDto.size);
+        return await this.userService.find(findUsersDto.page, findUsersDto.size, findUsersDto.search);
     }
 }

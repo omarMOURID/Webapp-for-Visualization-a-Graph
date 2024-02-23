@@ -1,7 +1,7 @@
 import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from './user.entity';
-import { EntityManager, In, Repository } from 'typeorm';
+import { EntityManager, In, Like, Repository } from 'typeorm';
 import { CreateUserDto } from './dto/create-user.dto';
 import * as bcrypt from "bcrypt";
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -163,20 +163,30 @@ export class UserService {
      * Retrieves a paginated list of users.
      * @param page The page number.
      * @param size The number of items per page.
+     * @param search Search on users names.
      * @returns A paginated list of users.
      */
-    async find(page: number = 1, size: number = 10): Promise<PaginationSchema<User>> {
+    async find(page: number = 1, size: number = 10, search: string): Promise<PaginationSchema<User>> {
         const options = {
             skip: (page - 1) * size,
             take: size,
             where: {},
         }
 
+        // If search string is provided, construct the search query
+        if (search) {
+            options.where = [
+                { firstname: Like(`%${search}%`) }, // Search for firstname containing the search string
+                { lastname: Like(`%${search}%`) },  // Search for lastname containing the search string
+                { email: Like(`%${search}%`) }      // Search for email containing the search string
+            ];
+    }
+
         // Fetch users based on pagination options
         const users = await this.userRepository.find(options);
 
         // Fetch total count of users (for pagination metadata)
-        const count = await this.userRepository.count();
+        const count = await this.userRepository.count({where: options.where});
 
         // Construct and return pagination result
         return {
